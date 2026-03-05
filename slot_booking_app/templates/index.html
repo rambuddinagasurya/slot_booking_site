@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Slot Booking Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/vibrant-dark.css') }}">
+</head>
+<body>
+  <div class="layout">
+    <aside class="sidebar">
+      <p class="brand">SlotMaster</p>
+      <p class="brand-sub">Operations Console</p>
+
+      <nav class="nav">
+        <a href="#top">Dashboard</a>
+        <a href="#available-slots" class="active">Available Slots</a>
+        <a href="/bookings">Booked Slots</a>
+      </nav>
+
+      <div class="side-card">
+        <p><strong>Today Focus:</strong> Reduce no-shows and close pending bookings before end of day.</p>
+      </div>
+    </aside>
+
+    <main class="main" id="top">
+      <section class="hero booking-hero">
+        <div>
+          <p class="eyebrow">Operations Dashboard</p>
+          <h1>Slot Booking System</h1>
+          <p>Manage customer bookings, validate details, and monitor live occupancy.</p>
+          <p class="hero-date">{{ today_display }}</p>
+        </div>
+        <div class="hero-metrics">
+          <article class="hero-pill">
+            <p>Occupancy</p>
+            <strong>{{ occupancy_percent }}%</strong>
+          </article>
+          <article class="hero-pill">
+            <p>Next Free</p>
+            <strong>{{ next_free_slot }}</strong>
+          </article>
+        </div>
+      </section>
+
+      <section class="card slots-panel" id="available-slots">
+        <h2>Available Slots</h2>
+        <p class="panel-subtitle">Select an open slot and complete customer details to confirm booking.</p>
+
+        <div class="slot-list">
+          {% for slot in slots %}
+          <article class="slot-row {% if slot.status != 'available' %}is-booked{% endif %}">
+            <div>
+              <h3>{{ slot.slot_time }}</h3>
+              {% if slot.status == 'available' %}
+              <p>Open for booking</p>
+              {% else %}
+              <p>Booked{% if slot.booked_name %}: {{ slot.booked_name }}{% endif %}</p>
+              {% endif %}
+            </div>
+            <div>
+              {% if slot.status == 'available' %}
+                {% if selected_slot_id == (slot.id|string) %}
+                <button type="button" class="slot-action is-selected" disabled>Selected</button>
+                {% else %}
+                <button type="button" class="slot-action" onclick="selectSlot('{{ slot.id }}')">Select Slot</button>
+                {% endif %}
+              {% else %}
+              <span class="slot-badge">Booked</span>
+              {% endif %}
+            </div>
+          </article>
+          {% endfor %}
+        </div>
+
+        {% set ns = namespace(count=0) %}
+        {% for slot in slots %}
+          {% if slot.status == 'available' %}
+            {% set ns.count = ns.count + 1 %}
+          {% endif %}
+        {% endfor %}
+
+        {% if ns.count > 0 %}
+        <form method="POST" action="/book" class="booking-form">
+          <div class="field">
+            <label for="name">Customer Name</label>
+            <input id="name" type="text" name="name" required placeholder="Enter full name">
+          </div>
+
+          <div class="field">
+            <label for="email">Email Address</label>
+            <input id="email" type="email" name="email" required placeholder="Enter email address">
+          </div>
+
+          <div class="field">
+            <label for="phone">Phone Number</label>
+            <input id="phone" type="tel" name="phone" required placeholder="Enter phone number" pattern="[0-9]{10,15}">
+          </div>
+
+          <div class="field">
+            <label for="slot_id">Choose Slot</label>
+            <select id="slot_id" name="slot_id" required>
+              {% for slot in slots %}
+              <option
+                value="{{ slot.id }}"
+                {% if slot.status != 'available' %}disabled{% endif %}
+                {% if slot.status == 'available' and selected_slot_id == (slot.id|string) %}selected{% endif %}
+              >
+                {{ slot.slot_time }}{% if slot.status != 'available' %} (Booked){% endif %}
+              </option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <button type="submit" class="btn">Confirm Booking</button>
+          <p class="hint">Phone number is mandatory for booking confirmation and reminders.</p>
+        </form>
+        {% else %}
+        <p class="hint">No slots available now. Complete some bookings or add more slots.</p>
+        {% endif %}
+      </section>
+    </main>
+  </div>
+  <script>
+    function selectSlot(slotId) {
+      var select = document.getElementById("slot_id");
+      if (select) {
+        select.value = slotId;
+      }
+      var url = new URL(window.location.href);
+      url.searchParams.set("slot_id", slotId);
+      window.location.href = url.toString();
+    }
+  </script>
+</body>
+</html>

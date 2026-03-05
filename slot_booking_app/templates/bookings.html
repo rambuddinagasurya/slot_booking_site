@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Manage Bookings</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/vibrant-dark.css') }}">
+</head>
+<body>
+  <div class="layout">
+    <aside class="sidebar">
+      <p class="brand">SlotMaster</p>
+      <p class="brand-sub">Operations Console</p>
+
+      <nav class="nav">
+        <a href="/">Dashboard</a>
+        <a href="/bookings" class="active">Bookings</a>
+      </nav>
+    </aside>
+
+    <main class="main">
+      <section class="header">
+        <div>
+          <h1>Bookings Management</h1>
+          <p>Track each customer booking, contact details, and mark reservations as completed after service.</p>
+        </div>
+        <a href="/">+ New Booking</a>
+      </section>
+
+      <section class="kpis">
+        <article class="kpi">
+          <p class="label">Total Bookings</p>
+          <p class="value">{{ stats.total_bookings }}</p>
+        </article>
+        <article class="kpi">
+          <p class="label">Completed</p>
+          <p class="value">{{ stats.completed_bookings }}</p>
+        </article>
+        <article class="kpi">
+          <p class="label">Pending</p>
+          <p class="value">{{ stats.pending_bookings }}</p>
+        </article>
+        <article class="kpi">
+          <p class="label">Available Slots</p>
+          <p class="value">{{ stats.available_slots }}</p>
+        </article>
+      </section>
+
+      <section class="card">
+        {% if bookings and bookings|length > 0 %}
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Customer</th>
+              <th>Email</th>
+              <th>Phone</th>
+              <th>Slot Time</th>
+              <th>Booked At</th>
+              <th>Status</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for b in bookings %}
+            <tr>
+              <td>#{{ b.id }}</td>
+              <td>{{ b.name }}</td>
+              <td>{{ b.email or '-' }}</td>
+              <td>{{ b.phone }}</td>
+              <td>{{ b.slot_time }}</td>
+              <td>{{ b.booked_on }}</td>
+              <td>
+                <span class="badge {{ b.status }}">{{ b.status }}</span>
+              </td>
+              <td>
+                <form method="POST" action="/bookings/{{ b.id }}/complete" style="margin:0;">
+                  <button type="submit" class="complete-btn" {% if b.status == 'completed' %}disabled{% endif %}>
+                    {% if b.status == 'completed' %}Completed{% else %}Mark Complete{% endif %}
+                  </button>
+                </form>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        {% else %}
+          <p class="empty">No bookings available.</p>
+        {% endif %}
+      </section>
+    </main>
+  </div>
+</body>
+</html>
